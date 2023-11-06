@@ -105,7 +105,10 @@ def register(request):
 
 
 def profile(request, username):
-    user = User.objects.get(username=username)
+    try:
+        user = User.objects.get(username=username)
+    except:
+        return HttpResponseRedirect("User not exist")
     all_posts = Post.objects.filter(creater=user).order_by('-date_created')
     paginator = Paginator(all_posts, 10)
     page_number = request.GET.get('page')
@@ -118,11 +121,16 @@ def profile(request, username):
     if request.user.is_authenticated:
         followings = Follower.objects.filter(followers=request.user).values_list('user', flat=True)
         suggestions = User.objects.exclude(pk__in=followings).exclude(username=request.user.username).order_by("?")[:6]
-
-        if request.user in Follower.objects.get(user=user).followers.all():
-            follower = True
+        try:
+            if request.user in Follower.objects.get(user=user).followers.all():
+                follower = True
+        except:
+            pass
     
-    follower_count = Follower.objects.get(user=user).followers.all().count()
+    try:
+        follower_count = Follower.objects.get(user=user).followers.all().count()
+    except:
+        follower_count=0
     following_count = Follower.objects.filter(followers=user).count()
     return render(request, 'profile.html', {
         "username": user,
